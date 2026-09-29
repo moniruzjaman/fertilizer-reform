@@ -1067,7 +1067,7 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
       <button class="tb-i" data-menu="mLang" aria-haspopup="true" aria-expanded="false" title="Translate this brief">
         <span id="langIcon"><svg><use href="#i-lang"/></svg></span><b data-i18n>Translate</b>
       </button>
-      <div class="tb-menu tb-lang" id="mLang"></div>
+      <div class="tb-menu tb-lang" id="mLang" data-no-i18n></div>
     </div>
 
     <button class="tb-i" data-act="share" title="Share this brief">
@@ -1118,6 +1118,9 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   }
   window.addEventListener('scroll',onScroll,{passive:true});onScroll();
 
+  /* live figures follow the reading language (Bengali numerals in Bangla) */
+  function numLocale(){return curLang==='bn'?'bn-BD':'en-US';}
+
   /* animated counters */
   function count(el){
     if(el.dataset.done)return;el.dataset.done="1";
@@ -1125,7 +1128,7 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
     var t0=performance.now(),dur=1500;
     function step(t){
       var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3),v=to*e;
-      el.textContent=v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+      el.textContent=v.toLocaleString(numLocale(),{minimumFractionDigits:dec,maximumFractionDigits:dec});
       if(p<1)requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -1147,10 +1150,20 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   /* cost-of-inaction ticker: Tk 2,500 crore / year */
   var rate=25000000000/(365*24*3600); /* Tk per second ≈ 792.5 */
   var tick=document.getElementById('tick'),start=Date.now();
-  setInterval(function(){
+  function paintTick(){
     var secs=(Date.now()-start)/1000;
-    tick.textContent=Math.floor(secs*rate).toLocaleString('en-US');
-  },200);
+    tick.textContent=Math.floor(secs*rate).toLocaleString(numLocale());
+  }
+  setInterval(paintTick,200);
+  /* re-render finished figures in the new locale without replaying the animation */
+  function refreshFigures(){
+    paintTick();
+    document.querySelectorAll('.num').forEach(function(el){
+      if(!el.dataset.done)return;
+      var to=parseFloat(el.dataset.to||"0"),dec=parseInt(el.dataset.dec||"0",10);
+      el.textContent=to.toLocaleString(numLocale(),{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    });
+  }
 
   /* directive checkboxes -> commitment note + stamp */
   var checks=Array.prototype.slice.call(document.querySelectorAll('.memo-check'));
@@ -1190,9 +1203,14 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   ];
   var DEFAULT_LANG='bn';                 /* the brief opens in Bangla */
   var curLang='en', spokenLang='en';    /* spokenLang only follows curLang once text is translated */
-  var originalHTML=[], cache={}, queue=[], qi=0, playing=false;
+  var cache={}, queue=[], qi=0, playing=false;
+  var trBusy=false, trOK=0, trTotal=0, trDone=0, trFell=0;
 
-  try{cache=JSON.parse(localStorage.getItem('fertTrans')||'{}')||{};}catch(e){cache={};}
+  /* MyMemory gives a much larger free quota when a contact address is
+     supplied with each call. Leave empty to stay anonymous. */
+  var MT_EMAIL='';
+
+  try{cache=JSON.parse(localStorage.getItem('fertTrans3')||'{}')||{};}catch(e){cache={};}
 
   var tbToast=document.getElementById('tbToast'),tbMsg=document.getElementById('tbMsg'),tbTimer;
   function toast(msg,icon){
@@ -1259,108 +1277,339 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
     setTimeout(function(){window.print();},60);
   }
 
-  /* ---- translation (MyMemory, cached in localStorage) ---- */
-  function decodeEntities(s){var t=document.createElement('textarea');t.innerHTML=s;return t.value;}
-  function translateChunk(text,target){
-    var key=target+'|'+text;
-    if(cache[key])return Promise.resolve(cache[key]);
-    if(!navigator.onLine)return Promise.reject(new Error('offline'));
-    return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair=en|'+target)
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.responseStatus===200&&d.responseData&&d.responseData.translatedText){
-          var out=decodeEntities(d.responseData.translatedText);
-          cache[key]=out;
-          try{localStorage.setItem('fertTrans',JSON.stringify(cache));}catch(e){}
-          return out;
-        }
-        throw new Error('translation failed');
-      });
+  /* ================================================================
+     TRANSLATION ENGINE
+     - covers every text node on the page, not a hand-picked subset
+     - terminology pre-pass so units/currency survive machine translation
+     - provider chain with a circuit breaker + localStorage cache
+     - exact restore of the original text when switching back to English
+     ================================================================ */
+  var BN_DIGITS={'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
+  var LETTERS=/[A-Za-z\u0980-\u09FF]/;
+  var SKIP_TAGS={SCRIPT:1,STYLE:1,SVG:1,TEXTAREA:1,INPUT:1,SELECT:1,OPTION:1,CODE:1,PRE:1,NOSCRIPT:1};
+  var origTitle=document.title, targets=[], shortSet={}, results={}, trPartial=false;
+
+  /* ---- terminology -------------------------------------------------
+     PRE runs on the English source before it leaves the browser. A
+     machine engine has never seen "Tk" or "NPK" and leaves them in
+     Latin script, so they are expanded into plain English first:
+       "Tk 2,562 cr"  -> "Taka 2,562 crore"            -> "২,৫৬২ কোটি টাকা"
+       "NPK"          -> "nitrogen phosphorus potassium" -> "নপক"      */
+  var PRE_EN=[
+    [/\bTk\.?/g,'Taka'],
+    [/\bcrore\/year\b/gi,'crore per year'],
+    [/\bcr\b/g,'crore'],
+    [/\bMt\b/g,'million tonnes'],
+    [/\blakh\b/gi,'lakh'],
+    [/(\d[\d,.]*)\s*t\b/g,'$1 tonnes'],
+    [/\bkg\b/g,'kilogram'],
+    [/\bNPK\b/g,'nitrogen phosphorus potassium'],
+    [/\bDAP\b/g,'diammonium phosphate'],
+    [/\bTSP\b/g,'triple super phosphate'],
+    [/\bMOP\b/g,'muriate of potash'],
+    [/\bNUE\b/g,'nutrient use efficiency'],
+    [/\bPoS\b/g,'point of sale'],
+    [/\bDBT\b/g,'direct benefit transfer'],
+    [/\bMFS\b/g,'mobile financial services'],
+    [/\biFMS\b/g,'integrated fertilizer management system'],
+    [/\bSTFFT\b/g,'soil testing and formula fertilization'],
+    [/\bKrishak Card\b/g,'Krishak farmer card']
+  ];
+
+  /* LOCAL is the deterministic half: it cleans up whatever a provider
+     leaves in Latin script, and it is the whole answer for fragments
+     too short to send and for offline use. */
+  var LOCAL={
+    bn:[
+      [/\bTaka\b/g,'টাকা'],[/\bTk\b/g,'টাকা'],[/\btaka\b/g,'টাকা'],
+      [/\bcrore\b/g,'কোটি'],[/\bcr\b/g,'কোটি'],[/\blakh\b/g,'লক্ষ'],
+      [/\btonnes\b/g,'টন'],[/\btonne\b/g,'টন'],[/\bton\b/g,'টন'],[/\btons\b/g,'টন'],
+      [/\bkilograms\b/g,'কেজি'],[/\bkilogram\b/g,'কেজি'],[/\bkg\b/g,'কেজি'],
+      [/\bbags\b/g,'বস্তা'],[/\bbag\b/g,'বস্তা'],
+      [/\bnitrogen phosphorus potassium\b/gi,'নপক'],
+      [/\bnutrient use efficiency\b/gi,'পুষ্টি ব্যবহার দক্ষতা'],
+      [/\bpoint of sale\b/gi,'বিক্রয় কেন্দ্র'],
+      [/\bfarmers\b/gi,'কৃষক'],[/\bfarmer\b/gi,'কৃষক'],
+      [/\bdealers\b/gi,'ডিলার'],[/\bdealer\b/gi,'ডিলার'],
+      [/\bsubsidy\b/gi,'ভর্তুকি'],[/\bfertilizer\b/gi,'সার'],[/\bfertiliser\b/gi,'সার'],
+      [/\bupazila\b/gi,'উপজেলা'],[/\bmouza\b/gi,'মৌজা'],[/\bharvest\b/gi,'ফসল'],
+      [/\byield\b/gi,'ফলন'],[/\bministry\b/gi,'মন্ত্রণালয়'],
+      /* order matters: "M t" must be consumed before the bare "M" */
+      [/\bM\s*t\b/g,'মিলিয়ন টন'],[/(\d)M\s*t\b/g,'$1 মিলিয়ন টন'],[/\bM\b/g,'মিলিয়ন'],
+      [/\bmillions\b/gi,'মিলিয়ন'],[/\bmillion\b/gi,'মিলিয়ন'],
+      [/\bbillions\b/gi,'বিলিয়ন'],[/\bbillion\b/gi,'বিলিয়ন'],
+      [/\bper year\b/g,'প্রতি বছর'],[/\byears\b/g,'বছর'],[/\byear\b/g,'বছর'],
+      /* Bangla puts the amount first: "২,৫৬২ কোটি টাকা", not "টাকা ২,৫৬২ কোটি" */
+      [/টাকা\s+([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*\/এ?কেজি/g,'$1 টাকা/কেজি'],
+      [/টাকা\s+([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*\/বস্তা/g,'$1 টাকা/বস্তা'],
+      [/টাকা\s+([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*কোটি/g,'$1 কোটি টাকা'],
+      [/টাকা\s+([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*লক্ষ/g,'$1 লক্ষ টাকা'],
+      [/([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*(?:cr|crore)\b/gi,'$1 কোটি'],
+      [/([\d,.]+(?:\s*[–—-]\s*[\d,.]+)?)\s*lakh\b/gi,'$1 লক্ষ'],
+      [/([\d,.]+)\s*bags?\b/gi,'$1 বস্তা']
+    ],
+    /* no \b here: JavaScript defines \b with [A-Za-z0-9_], so a word
+       boundary before a Bangla character never matches */
+    en:[
+      [/মিলিয়ন/g,'million'],[/বিলিয়ন/g,'billion'],[/প্রতি/g,'per'],[/বছর/g,'year'],
+      [/টাকা/g,'Tk'],[/কোটি/g,'crore'],[/লক্ষ/g,'lakh'],
+      [/টন/g,'tonnes'],[/কেজি/g,'kg'],[/বস্তা/g,'bags'],
+      [/নপক/g,'NPK'],[/পুষ্টি ব্যবহার দক্ষতা/g,'nutrient use efficiency'],
+      [/বিক্রয় কেন্দ্র/g,'point of sale'],[/কৃষক/g,'farmers'],
+      [/ডিলার/g,'dealers'],[/ভর্তুকি/g,'subsidy'],[/সার/g,'fertilizer'],
+      [/উপজেলা/g,'upazila'],[/মৌজা/g,'mouza'],[/ফসল/g,'crop'],
+      [/ফলন/g,'yield'],[/মন্ত্রণালয়/g,'ministry']
+    ]
+  };
+  /* acronyms a provider likes to transliterate; keep them readable */
+  var ACRONYM=[
+    ['বিএডিসি','BADC'],['ডিএই','DAE'],['ডি.এ.ই','DAE'],['ডি এ ই','DAE'],
+    ['এনআইডি','NID'],['এন আই ডি','NID'],['বিডিএস','BDS'],
+    ['ইডিএলএমএস','EDLMS'],['এসডিজি','SDG'],['এস ডি জি','SDG']
+  ];
+
+  function applyAll(pairs,text){
+    for(var i=0;i<pairs.length;i++)text=String(text).replace(pairs[i][0],pairs[i][1]);
+    return text;
   }
-  function splitText(text,max){
-    var parts=text.match(/[^.!?।]+[.!?।]*/g)||[text];
-    var out=[],cur='';
-    for(var i=0;i<parts.length;i++){
-      var s=parts[i];
-      if((cur+s).length>max){
-        if(cur)out.push(cur);
-        cur=s.length>max?s.slice(0,max):s;
-      }else cur+=s;
+  function hasBangla(s){return /[\u0980-\u09FF]/.test(s);}
+  function toBnDigits(s){return s.replace(/[0-9]/g,function(d){return BN_DIGITS[d];});}
+  function postProcess(text,lang){
+    text=String(text).replace(/\u00a0/g,' ').replace(/[ \t]{2,}/g,' ').replace(/^\s+|\s+$/g,'');
+    if(!text)return text;
+    if(lang==='bn'){
+      text=applyAll(LOCAL.bn,text);
+      for(var i=0;i<ACRONYM.length;i++)text=text.split(ACRONYM[i][0]).join(ACRONYM[i][1]);
+      text=toBnDigits(text);
+    }else{
+      text=applyAll(LOCAL.en,text);
+      text=text.replace(/([\u09E6-\u09EF])/g,function(d){return String('\u09E6\u09E7\u09E8\u09E9\u09EA\u09EB\u09EC\u09ED\u09EE\u09EF'.indexOf(d));});
     }
-    if(cur)out.push(cur);
-    return out;
+    return text;
   }
-  function remember(el){
-    for(var i=0;i<originalHTML.length;i++)if(originalHTML[i].el===el)return;
-    originalHTML.push({el:el,html:el.innerHTML});
+  function latinWords(s){var m=String(s).match(/[A-Za-z]{3,}/g);return m?m.length:0;}
+
+  /* The glossary can finish a quantity ("Tk 2,562 crore" -> "২,৫৬২ কোটি
+     টাকা") but not a sentence. Rather than emit a Bangla/English mixture
+     when a provider is unreachable, it is applied only to strings whose
+     every word is a currency, scale or unit term. */
+  var UNIT_EN=/^(tk|taka|cr|crore|lakh|million|billion|mt|m|ton|tonne|tonnes|tons|t|kg|kilogram|bag|bags|sack|sacks|npk|dap|tsp|mop|urea|per|year)$/i;
+  /* every word the reverse table can convert must appear here, otherwise
+     unitLike() would refuse a string the glossary could have finished */
+  var UNIT_BN=/^(টাকা|কোটি|লক্ষ|টন|কেজি|বস্তা|নপক|ডিএপি|টিএসপি|ইউরিয়া|বছর|মিলিয়ন|বিলিয়ন|প্রতি|কৃষক|ডিলার|ভর্তুকি|সার|উপজেলা|মৌজা|ফসল|ফলন|মন্ত্রণালয়|পুষ্টি|ব্যবহার|দক্ষতা|বিক্রয়|কেন্দ্র)$/;
+  function unitLike(s,lang){
+    var i,w;
+    if(lang==='bn'){
+      w=String(s).match(/[A-Za-z]+/g);          /* single letters matter: "M t" */
+      if(!w||!w.length)return false;
+      for(i=0;i<w.length;i++)if(!UNIT_EN.test(w[i]))return false;
+      return true;
+    }
+    /* Bangla digits share the U+0980-09FF block, so drop them before
+       deciding whether every word is a term */
+    /* literal Bangla ranges in a character class can swallow the trailing
+       flags, so the block is always written with \u escapes */
+    w=String(s).match(/[\u0980-\u09FF]+/g);
+    if(!w||!w.length)return false;
+    w=w.filter(function(x){return !/^[\u09E6-\u09EF]+$/.test(x);});
+    if(!w.length)return false;
+    for(i=0;i<w.length;i++)if(!UNIT_BN.test(w[i]))return false;
+    return true;
   }
-  function restoreOriginals(){
-    originalHTML.forEach(function(p){p.el.innerHTML=p.html;});
+  /* deterministic only — used offline and for fragments too short to send */
+  function localOnly(text,lang){
+    var t=String(text).replace(/\s+/g,' ').trim();
+    if(!t)return t;
+    if(lang==='bn'&&hasBangla(t)&&latinWords(t)===0)return t;   /* already Bangla */
+    if(lang==='en'&&!hasBangla(t)&&latinWords(t)>0)return t;     /* already English */
+    if(!unitLike(t,lang))return t;
+    return postProcess(applyAll(PRE_EN,t),lang);
   }
-  function translateEl(el,target){
-    remember(el);
-    var text=(el.textContent||'').trim();
-    if(!text||text.length<2)return Promise.resolve();
-    var chunks=splitText(text,420),chain=Promise.resolve(),parts=[];
-    chunks.forEach(function(c){chain=chain.then(function(){return translateChunk(c,target).then(function(o){parts.push(o);});});});
-    return chain.then(function(){
-      if(parts.length){el.textContent=parts.join(' ');trOK++;}
-    }).catch(function(){});
+
+  /* ---- providers ---------------------------------------------------- */
+  var PROV=[
+    {name:'google',fails:0,
+     url:function(sl,tl,q){return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t&q='+encodeURIComponent(q);},
+     parse:function(d){
+       if(!d||!d[0])return null;
+       var out='';
+       for(var i=0;i<d[0].length;i++)if(d[0][i]&&d[0][i][0])out+=d[0][i][0];
+       return out||null;
+     }},
+    {name:'mymemory',fails:0,
+     url:function(sl,tl,q){return 'https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair='+sl+'|'+tl+(MT_EMAIL?'&de='+encodeURIComponent(MT_EMAIL):'');},
+     parse:function(d){
+       if(!d||d.responseStatus!==200)return null;
+       var t=d.responseData&&d.responseData.translatedText;
+       if(!t||/MYMEMORY WARNING|QUOTA|LIMIT/i.test(t))return null;
+       return t;
+     }}
+  ];
+  function fetchJSON(url){
+    var ctl=('AbortController' in window)?new AbortController():null;
+    var timer=setTimeout(function(){if(ctl)ctl.abort();},15000);
+    var opt=ctl?{signal:ctl.signal}:undefined;
+    return fetch(url,opt).then(function(r){
+      if(!r.ok)throw new Error('http '+r.status);
+      return r.json();
+    }).then(function(d){clearTimeout(timer);return d;},function(e){clearTimeout(timer);throw e;});
   }
-  var trBusy=false,trOK=0;
+  /* try each provider in turn; after 3 bad answers a provider is
+     benched for the rest of the run so one dead endpoint cannot stall
+     the whole page (a 429 quota looks exactly like this) */
+  function mtOne(text,sl,tl){
+    var key='v3|'+tl+'|'+text;
+    if(cache[key])return Promise.resolve(cache[key]);
+    var i=0;
+    function attempt(){
+      if(i>=PROV.length)return Promise.reject(new Error('no provider available'));
+      var p=PROV[i++];
+      if(p.benched)return attempt();
+      return fetchJSON(p.url(sl,tl,text)).then(function(d){
+        var out=p.parse(d);
+        if(!out){if(++p.fails>=3)p.benched=true;throw new Error('unusable response');}
+        p.fails=0;
+        var fin=postProcess(out,tl);
+        cache[key]=fin;
+        return fin;
+      },function(){if(++p.fails>=3)p.benched=true;return attempt();});
+    }
+    return attempt();
+  }
+
+  /* ---- cache persistence (debounced) ---- */
+  var saveT;
+  function saveCache(){
+    clearTimeout(saveT);
+    saveT=setTimeout(function(){
+      try{localStorage.setItem('fertTrans3',JSON.stringify(cache));}catch(e){}
+    },600);
+  }
+
+  /* ---- what to translate ---- */
+  /* Every text node on the page, so nothing is left behind in English.
+     Stubs beside a counter ("Tk ") carry no meaning alone: they are
+     flagged for the glossary instead of costing a provider call. */
+  function collect(){
+    targets=[];shortSet={};
+    (function walk(el){
+      var leaf=!el.firstElementChild;
+      for(var i=0;i<el.childNodes.length;i++){
+        var c=el.childNodes[i];
+        if(c.nodeType===3){
+          if(!LETTERS.test(c.data))continue;
+          var t=c.data.trim();
+          if(t.length<1)continue;
+          if(!leaf&&t.length<12)shortSet[core(t)]=1;
+          targets.push({node:c,orig:c.data});
+        }else if(c.nodeType===1){
+          if(SKIP_TAGS[c.nodeName]||c.hasAttribute('data-no-i18n'))continue;
+          walk(c);
+        }
+      }
+    })(document.body);
+  }
+  function core(s){return s.replace(/\s+/g,' ').trim();}
+  function applyString(orig,fin){
+    var m=/^(\s*)([\s\S]*?)(\s*)$/.exec(orig);
+    return m[1]+fin+m[3];
+  }
+
+  function pool(items,limit,fn,done){
+    var i=0,active=0,finished=0;
+    function next(){
+      while(active<limit&&i<items.length){
+        var it=items[i++];active++;
+        (function(item){
+          fn(item,function(){active--;if(++finished===items.length)done();else next();});
+        })(it);
+      }
+    }
+    next();
+  }
+
+  function restoreEnglish(){
+    curLang='en';spokenLang='en';
+    for(var i=0;i<targets.length;i++)targets[i].node.data=targets[i].orig;
+    document.title=origTitle;
+    refreshFigures();
+    document.documentElement.setAttribute('dir','ltr');
+    document.documentElement.setAttribute('lang','en');
+    markLang();
+    toast('English restored','#i-lang');
+  }
+
   function setLang(code){
     if(trBusy)return;
-    if(code===curLang){closeMenus();return;}
     closeMenus();
+    if(code===curLang){if(trPartial)translateAll(code);return;}
     stopTTS(true);
-    if(code==='en'){
-      curLang='en';spokenLang='en';
-      restoreOriginals();
-      originalHTML=[];
-      document.documentElement.setAttribute('dir','ltr');
-      document.documentElement.setAttribute('lang','en');
-      markLang();toast('English restored','#i-lang');
-      return;
-    }
-    curLang=code;spokenLang='en';trBusy=true;trOK=0;
-    var lang=LANGS.filter(function(l){return l.code===code;})[0]||LANGS[0];
-    restoreOriginals(); /* always translate from the English source */
-    document.documentElement.setAttribute('dir',lang.dir||'ltr');
-    document.documentElement.setAttribute('lang',code);
+    if(code==='en'){restoreEnglish();return;}
+    translateAll(code);
+  }
+
+  function translateAll(tl){
+    curLang=tl;spokenLang='en';trBusy=true;trOK=0;trPartial=false;trFell=0;results={};
+    var meta=LANGS.filter(function(l){return l.code===tl;})[0]||LANGS[0];
+    document.documentElement.setAttribute('dir',meta.dir||'ltr');
+    document.documentElement.setAttribute('lang',tl);
+    markLang();
+    if(!targets.length)collect();
     var li=document.getElementById('langIcon');
     li.innerHTML='<svg class="spin"><use href="#i-spinner"/></svg>';
-    toast('অনুবাদ হচ্ছে…','#i-spinner');
-    markLang();
-    var els=Array.prototype.slice.call(document.querySelectorAll('[data-i18n]'));
-    var i=0;
-    function batch(){
-      if(i>=els.length){
-        li.innerHTML='<svg><use href="#i-lang"/></svg>';
-        trBusy=false;
-        if(!trOK){                       /* offline or API down — stay in English */
-          curLang='en';spokenLang='en';
-          restoreOriginals();originalHTML=[];
-          document.documentElement.setAttribute('dir','ltr');
-          document.documentElement.setAttribute('lang','en');
-          markLang();
-          toast('Translation unavailable — showing English','#i-lang');
-          return;
-        }
-        spokenLang=code;
-        toast('Translated to '+lang.label,'#i-lang');
-        return;
-      }
-      var slice=els.slice(i,i+5);i+=5;
-      Promise.all(slice.map(function(el){return translateEl(el,code);})).then(batch,batch);
+
+    /* one request per distinct string, not per element */
+    var seen={},uniq=[];
+    function add(s){
+      var c=core(s);
+      if(!c||seen[c])return;
+      seen[c]=1;uniq.push(c);
     }
-    batch();
+    for(var i=0;i<targets.length;i++)add(targets[i].orig);
+    add(origTitle);
+    trTotal=uniq.length;trDone=0;
+
+    toast('অনুবাদ হচ্ছে… 0/'+trTotal,'#i-spinner');
+    pool(uniq,4,function(item,next){
+      trDone++;
+      var p=shortSet[item]?Promise.resolve(null):mtOne(applyAll(PRE_EN,item),'en',tl);
+      p.then(function(out){
+        results[item]=out===null?localOnly(item,tl):out;
+        trOK++;
+      },function(){
+        results[item]=localOnly(item,tl);      /* offline: glossary still holds */
+        trFell++;                              /* a real string went untranslated */
+      }).then(function(){
+        saveCache();
+        if(trDone%12===0||trDone===trTotal)
+          toast('অনুবাদ হচ্ছে… '+trDone+'/'+trTotal,'#i-spinner');
+        next();
+      });
+    },function(){
+      /* paint */
+      for(var j=0;j<targets.length;j++){
+        var t=targets[j],c=core(t.orig);
+        var fin=results[c];
+        if(fin===undefined){fin=localOnly(t.orig,tl);trFell++;}
+        t.node.data=applyString(t.orig,fin);
+      }
+      var tc=core(origTitle);
+      if(tc&&results[tc])document.title=results[tc];
+      refreshFigures();
+      li.innerHTML='<svg><use href="#i-lang"/></svg>';
+      trBusy=false;
+      trPartial=trFell>0;
+      spokenLang=trPartial?'en':tl;   /* mixed text must still be read in English */
+      saveCache();
+      toast(trPartial?'আংশিক অনুবাদ — আবার চাপলে পুনরায় চেষ্টা হবে':'অনুবাদ সম্পন্ন','#i-lang');
+    });
   }
+
   function markLang(){
     mLang.querySelectorAll('button').forEach(function(b){
       b.classList.toggle('cur',b.getAttribute('data-lang')===curLang);
     });
   }
-
   /* ---- read aloud ---- */
   if('speechSynthesis' in window){
     speechSynthesis.getVoices();
@@ -1380,6 +1629,20 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
       if(!fallback&&v[i].lang&&v[i].lang.indexOf(spokenLang)===0)fallback=v[i];
     }
     return fallback;
+  }
+  /* sentences per utterance — speech engines stall on very long input */
+  function splitText(text,max){
+    var parts=text.match(/[^.!?।]+[.!?।]*/g)||[text];
+    var out=[],cur='';
+    for(var i=0;i<parts.length;i++){
+      var p=parts[i];
+      if((cur+p).length>max){
+        if(cur)out.push(cur);
+        cur=p.length>max?p.slice(0,max):p;
+      }else cur+=p;
+    }
+    if(cur)out.push(cur);
+    return out;
   }
   function buildQueue(){
     var out=[],els=document.querySelectorAll('section.sec');
