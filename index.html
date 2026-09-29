@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Distribution Reform Package — Fertilizer Distribution Reform | Ministry of Agriculture, Bangladesh</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/fraunces@latest/index.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/fraunces@latest/700.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/fraunces@latest/900.css">
@@ -21,7 +23,7 @@
   --paper:#f6f1e4; --card:#fffdf6; --ink:#122b21; --muted:#5f7268; --line:#e2d9c2;
   --red:#a4432c; --redBg:#f7e8e2; --amber:#b97c14; --amberBg:#f8efdb;
   --shadow:0 18px 44px -18px rgba(7,39,28,.28);
-  --serif:"Fraunces",Georgia,serif; --sans:"Manrope",system-ui,sans-serif; --bn:"Hind Siliguri",sans-serif;
+  --serif:"Fraunces","Hind Siliguri",Georgia,serif; --sans:"Manrope","Hind Siliguri",system-ui,sans-serif; --bn:"Hind Siliguri",sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:86px}
@@ -359,6 +361,62 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
 .float-cta:hover{transform:translateY(-3px)}
 .float-cta .dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.6s infinite}
 
+/* ---------- utility toolbar ---------- */
+#toolbar{position:fixed;left:0;right:0;bottom:18px;z-index:58;display:flex;justify-content:center;padding:0 16px;pointer-events:none}
+#toolbar .tb{pointer-events:auto;display:flex;align-items:stretch;gap:2px;background:rgba(5,29,21,.93);backdrop-filter:blur(10px);border:1px solid rgba(212,175,94,.35);border-radius:999px;padding:6px;box-shadow:0 18px 40px -14px rgba(5,29,21,.65)}
+.tb-i{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;cursor:pointer;color:rgba(240,212,146,.88);font:inherit;padding:7px 12px;border-radius:999px;transition:.2s}
+.tb-i:hover{background:rgba(212,175,94,.15);color:#f4e9cd}
+.tb-i:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tb-i svg{width:20px;height:20px}
+.tb-i b{font-size:9.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.tb-i[aria-expanded="true"]{background:var(--gold);color:var(--g900)}
+.tb-i.danger:hover{background:rgba(164,67,44,.28);color:#ffc0ab}
+.tb-pos{position:relative}
+.tb-menu{position:absolute;bottom:calc(100% + 14px);right:0;min-width:190px;background:var(--g900);border:1px solid rgba(212,175,94,.35);border-radius:14px;padding:6px;box-shadow:0 22px 44px -16px rgba(5,29,21,.8);display:none}
+.tb-menu.show{display:block}
+.tb-menu button{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;color:#eef3e9;font:inherit;font-size:13px;font-weight:600;text-align:left;padding:9px 11px;border-radius:9px;cursor:pointer;transition:.15s}
+.tb-menu button:hover{background:rgba(212,175,94,.16);color:#fbf6e7}
+.tb-menu button svg{width:15px;height:15px;flex:none;color:var(--gold)}
+.tb-menu button.cur{color:var(--gold2);font-weight:800}
+.tb-lang{max-height:240px;overflow-y:auto}
+
+/* ---------- toolbar toast ---------- */
+#tbToast{position:fixed;left:0;right:0;bottom:100px;z-index:59;display:flex;justify-content:center;pointer-events:none;opacity:0;transform:translateY(8px);transition:.25s}
+#tbToast.show{opacity:1;transform:none}
+#tbToast div{display:flex;align-items:center;gap:9px;background:rgba(5,29,21,.95);color:#f4e9cd;border:1px solid rgba(212,175,94,.4);border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;box-shadow:0 14px 30px -12px rgba(5,29,21,.75)}
+#tbToast svg{width:16px;height:16px;flex:none;color:var(--gold)}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- share modal ---------- */
+#shareModal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(4,18,13,.62);backdrop-filter:blur(4px)}
+#shareModal.show{display:flex}
+#shareModal .panel{width:100%;max-width:382px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:var(--shadow);animation:pop .22s ease}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.97)}}
+#shareModal h3{font-family:var(--serif);font-size:20px;font-weight:900;color:var(--g800);display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+#shareModal h3 button{background:none;border:0;cursor:pointer;color:var(--muted);padding:4px;border-radius:7px;line-height:0;transition:.2s}
+#shareModal h3 button:hover{background:#f1ebda;color:var(--g800)}
+#shareModal h3 button svg{width:20px;height:20px}
+#qrBox{width:172px;height:172px;margin:0 auto 14px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center}
+#qrBox img{width:100%;height:100%}
+#shareUrl{font-size:11.5px;line-height:1.55;color:var(--muted);text-align:center;word-break:break-all;background:#fbf7ec;border:1px dashed var(--line);border-radius:9px;padding:9px;margin-bottom:16px;user-select:all}
+.sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.sh-grid a,.sh-grid button{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;transition:.2s}
+.sh-grid svg{width:15px;height:15px}
+.sh-a{background:linear-gradient(160deg,var(--gold2),var(--gold));color:var(--g900)}
+.sh-a:hover{transform:translateY(-2px)}
+.sh-b{background:var(--g800);color:var(--gold2)}
+.sh-b:hover{background:var(--g700)}
+.sh-grid.three{grid-template-columns:repeat(3,1fr)}
+.sh-x{background:var(--g950);color:#f4e9cd}
+.sh-fb{background:#1d4ed8;color:#fff}
+.sh-li{background:#0a66c2;color:#fff}
+.sh-grid.three a{padding:11px 6px;font-size:12px}
+.sh-grid.three a:hover{transform:translateY(-2px)}
+
+/* ---------- read-aloud highlight ---------- */
+.tts-active{outline:2px solid var(--gold);outline-offset:7px;border-radius:12px;background-color:rgba(212,175,94,.15)!important;transition:background-color .3s,outline-color .3s}
+
 /* ---------- reveal ---------- */
 .rv{opacity:0;transform:translateY(22px);transition:opacity .8s ease var(--d,0s),transform .8s ease var(--d,0s)}
 .rv.in{opacity:1;transform:none}
@@ -370,15 +428,22 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   .radios{grid-template-columns:repeat(2,1fr)}
   .hero-in{padding-bottom:260px}
 }
+@media(max-width:760px){
+  .tb-i b{display:none}
+  .tb-i{padding:9px 11px}
+  .tb-menu{right:auto;left:0}
+}
 @media(max-width:620px){
   .hero-stats,.field-grid,.req-grid,.phases,.arch,.sdg,.sub-chips,.radios{grid-template-columns:1fr}
   .top-actions .chip{display:none}
   .sign{grid-template-columns:1fr}
   .ticker .side{text-align:left}
   .stamp{right:12px;top:auto;bottom:20px}
+  .float-cta{right:14px;bottom:74px;padding:10px 16px;font-size:12.5px}
+  #tbToast{bottom:132px}
 }
 @media print{
-  .topbar,.float-cta,.toc,.progress{display:none!important}
+  .topbar,.float-cta,.toc,.progress,#toolbar,#tbToast,#shareModal{display:none!important}
   .hero{padding-top:40px}
   .hero-in{padding-bottom:60px}
   .sec{padding:34px 12px}
@@ -406,6 +471,18 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M12 6 5 8m7-2 7 2M5 8l-2.5 5a3 3 0 0 0 5 0Zm14 0-2.5 5a3 3 0 0 0 5 0Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19c.8-3.4 2.9-5 5.5-5s4.7 1.6 5.5 5M16 5.5a3 3 0 0 1 0 5.6M18 14.2c1.6.7 2.6 2.2 3 4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4 3-6.5 7-6.5 0 4-3 6.5-7 6.5Zm0 0c0-4-3-6.5-7-6.5 0 4 3 6.5 7 6.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4.5-4.5M12 14l-4.5-4.5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M9 7 4.5 12 9 17M15 7l4.5 5-4.5 5M13.5 4 10.5 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M3 6h9M7.5 4v2c0 3.6-2.1 6.4-4.5 7.6M5.5 9.5c1.1 2.4 3.4 4.2 5.8 4.8M13 20l4-9 4 9M14.6 16.5h4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m8.3 10.8 7.4-4.1M8.3 13.2l7.4 4.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19V5ZM15 9.2a4 4 0 0 1 0 5.6M18 6.6a7.5 7.5 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9.5 5v14M14.5 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15 6.5V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-audio" viewBox="0 0 24 24"><path d="M4 11v2M8 8.5v7M12 4.5v15M16 8.5v7M20 11v2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-spinner" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
 </svg>
 
 <!-- ================= TOP BAR ================= -->
@@ -467,7 +544,7 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
 <!-- ================= TOC ================= -->
 <nav class="toc">
   <div class="toc-in">
-    <p>Package Contents — 15 Movements of the Argument</p>
+    <p data-i18n>Package Contents — 15 Movements of the Argument</p>
     <div class="toc-grid">
       <a href="#s1"><i>01</i>The Decision Memorandum</a>
       <a href="#s2"><i>02</i>The Human Cost</a>
@@ -493,8 +570,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">01 — DECIDE FIRST</span>
-      <h2>Decision Memorandum</h2>
-      <p class="lead">Everything that follows exists to support one decision. Read the ask, watch the counter, mark the four directives — then proceed to the evidence.</p>
+      <h2 data-i18n>Decision Memorandum</h2>
+      <p class="lead" data-i18n>Everything that follows exists to support one decision. Read the ask, watch the counter, mark the four directives — then proceed to the evidence.</p>
       <div class="rule-gold"></div>
     </div>
 
@@ -540,8 +617,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">02 — THE HUMAN COST</span>
-      <h2>Before the data, the people.</h2>
-      <p class="lead">Two voices from the field define this package more precisely than any table can.</p>
+      <h2 data-i18n>Before the data, the people.</h2>
+      <p class="lead" data-i18n>Two voices from the field define this package more precisely than any table can.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="voices-grid">
@@ -582,8 +659,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">03 — THE PRESENT CRISIS</span>
-      <h2>Warehouses are full. Farmers cannot buy.</h2>
-      <p class="lead">Official data confirm sufficient national stocks and approved imports of 365,000 tonnes at Tk 2,562 crore. Lift-off data — what dealers actually pull from warehouses — tells the opposite story, division after division. The failure is not procurement. It is last-mile distribution.</p>
+      <h2 data-i18n>Warehouses are full. Farmers cannot buy.</h2>
+      <p class="lead" data-i18n>Official data confirm sufficient national stocks and approved imports of 365,000 tonnes at Tk 2,562 crore. Lift-off data — what dealers actually pull from warehouses — tells the opposite story, division after division. The failure is not procurement. It is last-mile distribution.</p>
       <div class="rule-gold"></div>
     </div>
 
@@ -628,8 +705,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">04 — THE SUBSIDY BURDEN</span>
-      <h2>A fiscal tightrope — immense spending, regressive outcomes.</h2>
-      <p class="lead">The subsidy consumes the bulk of agricultural spending, crowds out research, irrigation and climate resilience — and still reaches the wrong hands.</p>
+      <h2 data-i18n>A fiscal tightrope — immense spending, regressive outcomes.</h2>
+      <p class="lead" data-i18n>The subsidy consumes the bulk of agricultural spending, crowds out research, irrigation and climate resilience — and still reaches the wrong hands.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="burden-grid">
@@ -659,8 +736,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">05 — ROOT CAUSE ANALYSIS</span>
-      <h2>Three structural dysfunctions sustain the crisis.</h2>
-      <p class="lead">None of them are acts of nature. All of them are design choices — and all of them can be redesigned.</p>
+      <h2 data-i18n>Three structural dysfunctions sustain the crisis.</h2>
+      <p class="lead" data-i18n>None of them are acts of nature. All of them are design choices — and all of them can be redesigned.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="tri">
@@ -676,8 +753,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">06 — ASSETS IN HAND</span>
-      <h2>Bangladesh is not starting from zero.</h2>
-      <p class="lead">Four foundational assets — already funded, already moving — provide the complete architecture for reform. This is a policy choice, not a technical one.</p>
+      <h2 data-i18n>Bangladesh is not starting from zero.</h2>
+      <p class="lead" data-i18n>Four foundational assets — already funded, already moving — provide the complete architecture for reform. This is a policy choice, not a technical one.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="pillars">
@@ -694,8 +771,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">07 — REGIONAL PROOF</span>
-      <h2>Our neighbours have already run this experiment.</h2>
-      <p class="lead">India proves biometric distribution works at scale. Vietnam proves less fertilizer can be more. China proves digital infrastructure changes behaviour. The Philippines warns what happens without tracking.</p>
+      <h2 data-i18n>Our neighbours have already run this experiment.</h2>
+      <p class="lead" data-i18n>India proves biometric distribution works at scale. Vietnam proves less fertilizer can be more. China proves digital infrastructure changes behaviour. The Philippines warns what happens without tracking.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="reg-grid">
@@ -712,8 +789,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">08 — REFORM ARCHITECTURE</span>
-      <h2>A four-layer system, plus eight requirements for accountability.</h2>
-      <p class="lead">The core recommendation: transition from a blanket, dealer-centric subsidy model to a biometrically authenticated, land-linked, digitally tracked distribution system — the right farmer, the right input, the right price, the right time.</p>
+      <h2 data-i18n>A four-layer system, plus eight requirements for accountability.</h2>
+      <p class="lead" data-i18n>The core recommendation: transition from a blanket, dealer-centric subsidy model to a biometrically authenticated, land-linked, digitally tracked distribution system — the right farmer, the right input, the right price, the right time.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="arch">
@@ -744,8 +821,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">09 — THE ROADMAP</span>
-      <h2>Momentum first: visible wins in 100 days, full transformation in five years.</h2>
-      <p class="lead">Political momentum comes from visible progress. Phase 0 generates announcements the Hon'ble Minister can make publicly within the first quarter — before the Boro season window closes.</p>
+      <h2 data-i18n>Momentum first: visible wins in 100 days, full transformation in five years.</h2>
+      <p class="lead" data-i18n>Political momentum comes from visible progress. Phase 0 generates announcements the Hon'ble Minister can make publicly within the first quarter — before the Boro season window closes.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="phase0 rv">
@@ -772,8 +849,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">10 — STAKEHOLDERS & POLITICAL COALITION</span>
-      <h2>Who does what — and who must be mobilized, managed, or neutralized.</h2>
-      <p class="lead">Reform succeeds or fails on political feasibility. This map identifies the forces the Hon'ble Minister must command.</p>
+      <h2 data-i18n>Who does what — and who must be mobilized, managed, or neutralized.</h2>
+      <p class="lead" data-i18n>Reform succeeds or fails on political feasibility. This map identifies the forces the Hon'ble Minister must command.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="tbl-wrap rv">
@@ -804,8 +881,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">11 — THE ECONOMICS</span>
-      <h2>Reform pays for itself within 2–3 fiscal cycles.</h2>
-      <p class="lead">Status quo: Tk 17,001 crore FY2026-27 plus Tk 1,350 crore emergency supplement, plus implicit costs — environmental degradation, farmer distress, eroded trust. Reform reverses the flow.</p>
+      <h2 data-i18n>Reform pays for itself within 2–3 fiscal cycles.</h2>
+      <p class="lead" data-i18n>Status quo: Tk 17,001 crore FY2026-27 plus Tk 1,350 crore emergency supplement, plus implicit costs — environmental degradation, farmer distress, eroded trust. Reform reverses the flow.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="tbl-wrap rv">
@@ -829,8 +906,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">12 — MONITORING, EVALUATION & LEARNING</span>
-      <h2>A scorecard the public can read, quarter by quarter.</h2>
-      <p class="lead">Quarterly ministry-led technical reviews; an annual stakeholder forum of farmers, civil society and partners; adaptive triggers — if biometric PoS uptime falls below 90% in any division, local server redundancy protocols escalate automatically.</p>
+      <h2 data-i18n>A scorecard the public can read, quarter by quarter.</h2>
+      <p class="lead" data-i18n>Quarterly ministry-led technical reviews; an annual stakeholder forum of farmers, civil society and partners; adaptive triggers — if biometric PoS uptime falls below 90% in any division, local server redundancy protocols escalate automatically.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="tbl-wrap rv">
@@ -855,8 +932,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">13 — ALIGNMENT</span>
-      <h2>Not a new priority — the fastest route to promises already made.</h2>
-      <p class="lead">Approving this package lets the Hon'ble Minister claim credit for delivering on commitments the Government has already publicly signed.</p>
+      <h2 data-i18n>Not a new priority — the fastest route to promises already made.</h2>
+      <p class="lead" data-i18n>Approving this package lets the Hon'ble Minister claim credit for delivering on commitments the Government has already publicly signed.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="sdg">
@@ -891,8 +968,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">14 — THE PATH OF BIR UTTAM PRESIDENT ZIAUR RAHMAN</span>
-      <h2>A warehouse full of fertilizer means nothing if the farmer's hands remain empty.</h2>
-      <p class="lead">From the 1977 canal-digging programme and the restructuring of BADC to the 2026 digital land-linked quotas — the same mandate, renewed.</p>
+      <h2 data-i18n>A warehouse full of fertilizer means nothing if the farmer's hands remain empty.</h2>
+      <p class="lead" data-i18n>From the 1977 canal-digging programme and the restructuring of BADC to the 2026 digital land-linked quotas — the same mandate, renewed.</p>
       <div class="rule-gold"></div>
     </div>
     <div class="legacy-grid">
@@ -915,8 +992,8 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
   <div class="sec-in">
     <div class="sec-head rv">
       <span class="sec-no">15 — CONCLUSION & DECISION</span>
-      <h2>The crisis is governance, not nature. The resources are in hand. What remains is the will.</h2>
-      <p class="lead">The examples of our neighbours illuminate the path. The technology is ready. The farmer is waiting. The nation is watching.</p>
+      <h2 data-i18n>The crisis is governance, not nature. The resources are in hand. What remains is the will.</h2>
+      <p class="lead" data-i18n>The examples of our neighbours illuminate the path. The technology is ready. The farmer is waiting. The nation is watching.</p>
       <div class="rule-gold"></div>
     </div>
 
@@ -972,6 +1049,62 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
 </footer>
 
 <a class="float-cta" href="#s15"><i class="dot"></i>The Decision</a>
+
+<!-- ================= UTILITY TOOLBAR ================= -->
+<div id="toolbar">
+  <div class="tb">
+    <div class="tb-pos">
+      <button class="tb-i" data-menu="mSave" aria-haspopup="true" aria-expanded="false" title="Save or print this brief">
+        <svg><use href="#i-dl"/></svg><b data-i18n>Save</b>
+      </button>
+      <div class="tb-menu" id="mSave">
+        <button data-act="save-html"><svg><use href="#i-code"/></svg><span data-i18n>Download HTML</span></button>
+        <button data-act="print"><svg><use href="#i-print"/></svg><span data-i18n>Print / PDF</span></button>
+      </div>
+    </div>
+
+    <div class="tb-pos">
+      <button class="tb-i" data-menu="mLang" aria-haspopup="true" aria-expanded="false" title="Translate this brief">
+        <span id="langIcon"><svg><use href="#i-lang"/></svg></span><b data-i18n>Translate</b>
+      </button>
+      <div class="tb-menu tb-lang" id="mLang"></div>
+    </div>
+
+    <button class="tb-i" data-act="share" title="Share this brief">
+      <svg><use href="#i-share"/></svg><b data-i18n>Share</b>
+    </button>
+
+    <button class="tb-i" data-act="listen" id="btnListen" title="Read the whole brief aloud">
+      <svg><use href="#i-vol" id="listenIcon"/></svg><b data-i18n>Listen</b>
+    </button>
+
+    <button class="tb-i danger" data-act="stop" id="btnStop" title="Stop reading">
+      <svg><use href="#i-stop"/></svg><b data-i18n>Stop</b>
+    </button>
+  </div>
+</div>
+
+<div id="tbToast" role="status" aria-live="polite">
+  <div><svg><use href="#i-audio"/></svg><span id="tbMsg">Ready</span></div>
+</div>
+
+<!-- ================= SHARE MODAL ================= -->
+<div id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="panel">
+    <h3 id="shareTitle"><span data-i18n>Share this brief</span><button data-act="share-close" title="Close"><svg><use href="#i-x"/></svg></button></h3>
+    <div id="qrBox"></div>
+    <p id="shareUrl"></p>
+    <div class="sh-grid">
+      <button class="sh-a" data-act="copy"><svg><use href="#i-copy"/></svg><span data-i18n>Copy link</span></button>
+      <button class="sh-b" data-act="native"><svg><use href="#i-share"/></svg><span data-i18n>More…</span></button>
+    </div>
+    <div class="sh-grid three">
+      <a class="sh-x" id="shX" target="_blank" rel="noopener" title="Share on X">X</a>
+      <a class="sh-fb" id="shFb" target="_blank" rel="noopener" title="Share on Facebook">Facebook</a>
+      <a class="sh-li" id="shLi" target="_blank" rel="noopener" title="Share on LinkedIn">LinkedIn</a>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1045,6 +1178,350 @@ footer{background:var(--g950);color:rgba(238,243,233,.7);padding:52px 22px 40px;
       resp.className='dec-resp'+(m[1]?' '+m[1]:'');
     });
   });
+
+  /* ================================================================
+     UTILITY TOOLBAR — save / translate / share / read aloud
+     Ported to this page's own design system (no external libs):
+     inline SVG sprite, ES5, localStorage-cached translations.
+     ================================================================ */
+  var LANGS=[
+    {code:'bn',label:'বাংলা',tts:'bn-BD',dir:'ltr'},
+    {code:'en',label:'English',tts:'en-US',dir:'ltr'}
+  ];
+  var DEFAULT_LANG='bn';                 /* the brief opens in Bangla */
+  var curLang='en', spokenLang='en';    /* spokenLang only follows curLang once text is translated */
+  var originalHTML=[], cache={}, queue=[], qi=0, playing=false;
+
+  try{cache=JSON.parse(localStorage.getItem('fertTrans')||'{}')||{};}catch(e){cache={};}
+
+  var tbToast=document.getElementById('tbToast'),tbMsg=document.getElementById('tbMsg'),tbTimer;
+  function toast(msg,icon){
+    tbMsg.textContent=msg;
+    tbToast.querySelector('use').setAttribute('href',icon||'#i-audio');
+    tbToast.classList.add('show');
+    clearTimeout(tbTimer);
+    tbTimer=setTimeout(function(){tbToast.classList.remove('show');},2800);
+  }
+
+  /* ---- dropdowns (replaces Alpine x-show / @click.outside) ---- */
+  var menus=Array.prototype.slice.call(document.querySelectorAll('.tb-menu'));
+  function closeMenus(except){
+    menus.forEach(function(m){
+      if(m===except)return;
+      m.classList.remove('show');
+      var b=document.querySelector('[data-menu="'+m.id+'"]');
+      if(b)b.setAttribute('aria-expanded','false');
+    });
+  }
+  document.querySelectorAll('.tb-i[data-menu]').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var m=document.getElementById(btn.getAttribute('data-menu'));
+      var open=m.classList.contains('show');
+      closeMenus();
+      if(!open){m.classList.add('show');btn.setAttribute('aria-expanded','true');}
+    });
+  });
+  document.addEventListener('click',function(){closeMenus();});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){closeMenus();closeShare();}
+  });
+
+  /* ---- language menu ---- */
+  var mLang=document.getElementById('mLang');
+  LANGS.forEach(function(l){
+    var b=document.createElement('button');
+    b.textContent=l.label;
+    b.setAttribute('data-lang',l.code);
+    b.addEventListener('click',function(){closeMenus();setLang(l.code);});
+    mLang.appendChild(b);
+  });
+
+  /* ---- save / print ---- */
+  function downloadHTML(){
+    stopTTS(true);
+    var clone=document.documentElement.cloneNode(true);
+    /* strip transient UI state so the saved file opens clean */
+    var sp=clone.querySelector('#tbToast');
+    if(sp)sp.classList.remove('show');
+    var sm=clone.querySelector('#shareModal');
+    if(sm)sm.classList.remove('show');
+    clone.querySelectorAll('.tts-active').forEach(function(e){e.classList.remove('tts-active');});
+    var blob=new Blob(['<!DOCTYPE html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'});
+    var url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='fertilizer-distribution-reform-brief.html';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    toast('HTML file downloaded','#i-dl');
+  }
+  function doPrint(){
+    stopTTS(true);closeMenus();
+    setTimeout(function(){window.print();},60);
+  }
+
+  /* ---- translation (MyMemory, cached in localStorage) ---- */
+  function decodeEntities(s){var t=document.createElement('textarea');t.innerHTML=s;return t.value;}
+  function translateChunk(text,target){
+    var key=target+'|'+text;
+    if(cache[key])return Promise.resolve(cache[key]);
+    if(!navigator.onLine)return Promise.reject(new Error('offline'));
+    return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair=en|'+target)
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.responseStatus===200&&d.responseData&&d.responseData.translatedText){
+          var out=decodeEntities(d.responseData.translatedText);
+          cache[key]=out;
+          try{localStorage.setItem('fertTrans',JSON.stringify(cache));}catch(e){}
+          return out;
+        }
+        throw new Error('translation failed');
+      });
+  }
+  function splitText(text,max){
+    var parts=text.match(/[^.!?।]+[.!?।]*/g)||[text];
+    var out=[],cur='';
+    for(var i=0;i<parts.length;i++){
+      var s=parts[i];
+      if((cur+s).length>max){
+        if(cur)out.push(cur);
+        cur=s.length>max?s.slice(0,max):s;
+      }else cur+=s;
+    }
+    if(cur)out.push(cur);
+    return out;
+  }
+  function remember(el){
+    for(var i=0;i<originalHTML.length;i++)if(originalHTML[i].el===el)return;
+    originalHTML.push({el:el,html:el.innerHTML});
+  }
+  function restoreOriginals(){
+    originalHTML.forEach(function(p){p.el.innerHTML=p.html;});
+  }
+  function translateEl(el,target){
+    remember(el);
+    var text=(el.textContent||'').trim();
+    if(!text||text.length<2)return Promise.resolve();
+    var chunks=splitText(text,420),chain=Promise.resolve(),parts=[];
+    chunks.forEach(function(c){chain=chain.then(function(){return translateChunk(c,target).then(function(o){parts.push(o);});});});
+    return chain.then(function(){
+      if(parts.length){el.textContent=parts.join(' ');trOK++;}
+    }).catch(function(){});
+  }
+  var trBusy=false,trOK=0;
+  function setLang(code){
+    if(trBusy)return;
+    if(code===curLang){closeMenus();return;}
+    closeMenus();
+    stopTTS(true);
+    if(code==='en'){
+      curLang='en';spokenLang='en';
+      restoreOriginals();
+      originalHTML=[];
+      document.documentElement.setAttribute('dir','ltr');
+      document.documentElement.setAttribute('lang','en');
+      markLang();toast('English restored','#i-lang');
+      return;
+    }
+    curLang=code;spokenLang='en';trBusy=true;trOK=0;
+    var lang=LANGS.filter(function(l){return l.code===code;})[0]||LANGS[0];
+    restoreOriginals(); /* always translate from the English source */
+    document.documentElement.setAttribute('dir',lang.dir||'ltr');
+    document.documentElement.setAttribute('lang',code);
+    var li=document.getElementById('langIcon');
+    li.innerHTML='<svg class="spin"><use href="#i-spinner"/></svg>';
+    toast('অনুবাদ হচ্ছে…','#i-spinner');
+    markLang();
+    var els=Array.prototype.slice.call(document.querySelectorAll('[data-i18n]'));
+    var i=0;
+    function batch(){
+      if(i>=els.length){
+        li.innerHTML='<svg><use href="#i-lang"/></svg>';
+        trBusy=false;
+        if(!trOK){                       /* offline or API down — stay in English */
+          curLang='en';spokenLang='en';
+          restoreOriginals();originalHTML=[];
+          document.documentElement.setAttribute('dir','ltr');
+          document.documentElement.setAttribute('lang','en');
+          markLang();
+          toast('Translation unavailable — showing English','#i-lang');
+          return;
+        }
+        spokenLang=code;
+        toast('Translated to '+lang.label,'#i-lang');
+        return;
+      }
+      var slice=els.slice(i,i+5);i+=5;
+      Promise.all(slice.map(function(el){return translateEl(el,code);})).then(batch,batch);
+    }
+    batch();
+  }
+  function markLang(){
+    mLang.querySelectorAll('button').forEach(function(b){
+      b.classList.toggle('cur',b.getAttribute('data-lang')===curLang);
+    });
+  }
+
+  /* ---- read aloud ---- */
+  if('speechSynthesis' in window){
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged=function(){speechSynthesis.getVoices();};
+  }
+  function setListenIcon(name){
+    var u=document.getElementById('listenIcon');
+    if(u)u.setAttribute('href',name);
+  }
+  function ttsFor(code){
+    return (LANGS.filter(function(l){return l.code===code;})[0]||{}).tts||'en-US';
+  }
+  function pickVoice(){
+    var want=ttsFor(spokenLang),v=speechSynthesis.getVoices()||[],fallback=null;
+    for(var i=0;i<v.length;i++){
+      if(v[i].lang===want)return v[i];
+      if(!fallback&&v[i].lang&&v[i].lang.indexOf(spokenLang)===0)fallback=v[i];
+    }
+    return fallback;
+  }
+  function buildQueue(){
+    var out=[],els=document.querySelectorAll('section.sec');
+    Array.prototype.forEach.call(els,function(sec){
+      var head=sec.querySelector('.sec-head');
+      var headText=head?(head.textContent||'').trim():'';
+      var box=sec.querySelector('.sec-in');
+      if(!box)return;
+      var kids=Array.prototype.slice.call(box.children);
+      kids.forEach(function(k,i){
+        var txt=(k.textContent||'').replace(/\s+/g,' ').trim();
+        if(i===0&&headText)txt=headText+'. '+txt;
+        if(txt.length<40)return;
+        splitText(txt,600).forEach(function(c){out.push({el:k,text:c});});
+      });
+    });
+    return out;
+  }
+  function clearHighlight(){
+    document.querySelectorAll('.tts-active').forEach(function(e){e.classList.remove('tts-active');});
+  }
+  function speak(item,done){
+    if(!('speechSynthesis' in window))return;
+    var u=new SpeechSynthesisUtterance(item.text);
+    var v=pickVoice();
+    if(v)u.voice=v;
+    u.lang=ttsFor(spokenLang);
+    u.rate=1;u.pitch=1;
+    if(item.el){
+      item.el.classList.add('tts-active');
+      try{item.el.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
+    }
+    u.onend=u.onerror=function(){done();};
+    speechSynthesis.speak(u);
+  }
+  /* queue walker */
+  function step(){
+    if(!playing)return;
+    if(qi>=queue.length){stopTTS(true);toast('Reading complete','#i-vol');return;}
+    var item=queue[qi++];
+    speak(item,step);
+  }
+  function toggleReadAll(){
+    if(!('speechSynthesis' in window)){toast('Speech not supported here','#i-vol');return;}
+    if(playing){
+      if(speechSynthesis.paused){speechSynthesis.resume();setListenIcon('#i-pause');toast('Resumed','#i-vol');}
+      else{speechSynthesis.pause();setListenIcon('#i-vol');toast('Paused','#i-pause');}
+      return;
+    }
+    stopTTS(true);
+    queue=buildQueue();
+    if(!queue.length){toast('Nothing to read','#i-vol');return;}
+    qi=0;playing=true;
+    setListenIcon('#i-pause');
+    var sec=Math.round(queue.length*0.55/60);
+    toast('Reading the full brief (~'+sec+' min)','#i-vol');
+    step();
+  }
+  function stopTTS(silent){
+    if('speechSynthesis' in window)speechSynthesis.cancel();
+    playing=false;queue=[];qi=0;
+    clearHighlight();
+    setListenIcon('#i-vol');
+    if(!silent)toast('Stopped','#i-stop');
+  }
+  function stopTSSafe(){try{stopTTS(true);}catch(e){}}
+
+  /* ---- share ---- */
+  var shareModal=document.getElementById('shareModal'),lastFocus=null;
+  function pageURL(){return location.href.split('#')[0];}
+  function openShare(){
+    var url=pageURL(),enc=encodeURIComponent(url),title=encodeURIComponent(document.title);
+    lastFocus=document.activeElement;
+    document.getElementById('shareUrl').textContent=url;
+    document.getElementById('shX').href='https://twitter.com/intent/tweet?url='+enc+'&text='+title;
+    document.getElementById('shFb').href='https://www.facebook.com/sharer/sharer.php?u='+enc;
+    document.getElementById('shLi').href='https://www.linkedin.com/sharing/share-offsite/?url='+enc;
+    var box=document.getElementById('qrBox');
+    var img=document.createElement('img');
+    img.width=156;img.height=156;img.alt='QR code for this brief';
+    img.src='https://api.qrserver.com/v1/create-qr-code/?size=156x156&margin=0&data='+enc;
+    img.onerror=function(){
+      box.innerHTML='<span style="font-size:12px;color:#5f7268;text-align:center;line-height:1.5">QR unavailable offline.<br>Use the link below.</span>';
+    };
+    box.innerHTML='';box.appendChild(img);
+    shareModal.classList.add('show');
+    var f=document.querySelector('#shareModal h3 button');
+    if(f)f.focus();
+  }
+  function closeShare(){
+    if(!shareModal.classList.contains('show'))return;
+    shareModal.classList.remove('show');
+    if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  }
+  function copyLink(){
+    var url=pageURL();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){toast('Link copied','#i-copy');},function(){legacyCopy();});
+    }else legacyCopy();
+    function legacyCopy(){
+      var n=document.getElementById('shareUrl'),r=document.createRange();
+      r.selectNodeContents(n);
+      var s=window.getSelection();
+      s.removeAllRanges();s.addRange(r);
+      try{document.execCommand('copy');}catch(e){}
+      toast('Link copied','#i-copy');
+    }
+  }
+  function nativeShare(){
+    var data={title:document.title,text:'Fertilizer Distribution Reform — Decision Memorandum, Ministry of Agriculture, Bangladesh',url:pageURL()};
+    if(navigator.share){navigator.share(data).catch(function(){});}
+    else copyLink();
+  }
+
+  /* ---- wire up ---- */
+  function handleAct(e){
+    var b=e.target.closest?e.target.closest('[data-act]'):null;
+    if(!b)return;
+    var a=b.getAttribute('data-act');
+    if(a==='save-html')downloadHTML();
+    else if(a==='print')doPrint();
+    else if(a==='share'){closeMenus();openShare();}
+    else if(a==='share-close')closeShare();
+    else if(a==='copy')copyLink();
+    else if(a==='native')nativeShare();
+    else if(a==='listen')toggleReadAll();
+    else if(a==='stop')stopTTS();
+  }
+  document.getElementById('toolbar').addEventListener('click',handleAct);
+  shareModal.addEventListener('click',function(e){
+    if(e.target===shareModal)closeShare();
+    else handleAct(e);
+  });
+  document.addEventListener('visibilitychange',function(){if(document.hidden)stopTSSafe();});
+  if(!('speechSynthesis' in window)){
+    document.getElementById('btnListen').style.display='none';
+    document.getElementById('btnStop').style.display='none';
+  }
+  markLang();
+  window.addEventListener('beforeprint',function(){closeMenus();stopTSSafe();});
+  /* open in Bangla, then let the reader switch to English */
+  setLang(DEFAULT_LANG);
 })();
 </script>
 </body>
